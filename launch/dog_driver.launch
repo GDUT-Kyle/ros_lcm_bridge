@@ -1,0 +1,9 @@
+<launch>
+  <node name="dog_driver_node" pkg="ros_lcm_bridge" type="dog_driver_node" output="screen" >
+    <param name="dog_device" value="rec_dog_lcm" />
+    <param name="framerate" value="500" type="int" />
+  </node>
+  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ros_gogodog_bridge)/config/test.rviz" /> -->
+  <node pkg="tf" type="static_transform_publisher" name="dog_base_to_scan" args="0.1 0 0 0 0 0  dog_base laser   100" />
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_dog_base" args="0 0 0 0 0 0  dog_base base_link   100" />
+</launch>

@@ -14,6 +14,8 @@
 #include <lcm/lcm-cpp.hpp>
 #include "doglcm/rec_state.hpp"
 #include "doglcm/pub_ctrl.hpp"
+#include "doglcm/state_estimator_lcmt.hpp"
+#include "doglcm/vis_dev_cmd_t.hpp"
 #include "Eigen/Core"
 #include "Eigen/Dense"
 #include "Eigen/Geometry"
@@ -33,7 +35,7 @@ public:
     ros::Subscriber sub_reset;
 
     // lcm
-    lcm::LCM my_lcm;
+    lcm::LCM* my_lcm;
     int framerate_;
     std::string dog_device_;
 
@@ -71,8 +73,10 @@ public:
     void setVelocity(std::vector<double>& linear_vel, std::vector<double>& angular_vel);
     void cmdVelHandler(const geometry_msgs::Twist::ConstPtr cmdVel);
     void ResetOdomIntegratorCallback(const std_msgs::Bool::ConstPtr& msg);
+    // void lcm_handleMessage(const lcm::ReceiveBuffer* rbuf, const std::string& chan, 
+    //                         const doglcm::rec_state* msg);
     void lcm_handleMessage(const lcm::ReceiveBuffer* rbuf, const std::string& chan, 
-                            const doglcm::rec_state* msg);
+                            const doglcm::state_estimator_lcmt* msg);
 };
 } // namespace name
 

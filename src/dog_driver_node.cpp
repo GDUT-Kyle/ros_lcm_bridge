@@ -5,7 +5,7 @@ using namespace dog_driver;
 
 DogDriverNode::DogDriverNode() : n_("~")
 {
-	n_.param("dog_device", dog_device_, std::string("rec_dog_lcm"));
+	n_.param("dog_device", dog_device_, std::string("state_estimator_lcm"));
 	n_.param("framerate", framerate_, 100);
 
 	recVelocity.resize(6);
@@ -14,10 +14,12 @@ DogDriverNode::DogDriverNode() : n_("~")
 	curPosition.setZero();
 	curPose.setIdentity();
 
-    if(!my_lcm.good())
+	my_lcm = new lcm::LCM("udpm://239.255.76.67:7667?ttl=1");
+
+    if(!my_lcm->good())
         return;
 
-    my_lcm.subscribe(dog_device_, &DogDriverNode::lcm_handleMessage, this);
+    my_lcm->subscribe(dog_device_, &DogDriverNode::lcm_handleMessage, this);
 
 	pub_odom = n_.advertise<nav_msgs::Odometry>("/odom", 5);
 	sub_vel = 
@@ -38,13 +40,24 @@ DogDriverNode::~DogDriverNode()
 	stop();
 }
 
+// void DogDriverNode::lcm_handleMessage(const lcm::ReceiveBuffer* rbuf, const std::string& chan, 
+//                             const doglcm::rec_state* msg)
+// {
+//     for(int i=0; i<3; i++)
+//     {
+//         recVelocity[i] = msg->linear_velocity[i];
+//         recVelocity[i+3] = msg->angular_velocity[i];
+//     }
+//     parseOdometry();
+// }
+
 void DogDriverNode::lcm_handleMessage(const lcm::ReceiveBuffer* rbuf, const std::string& chan, 
-                            const doglcm::rec_state* msg)
+                            const doglcm::state_estimator_lcmt* msg)
 {
     for(int i=0; i<3; i++)
     {
-        recVelocity[i] = msg->linear_velocity[i];
-        recVelocity[i+3] = msg->angular_velocity[i];
+        recVelocity[i] = msg->vBody[i];
+        recVelocity[i+3] = msg->omegaBody[i];
     }
     parseOdometry();
 }
@@ -72,15 +85,27 @@ void DogDriverNode::ResetOdomIntegratorCallback(const std_msgs::Bool::ConstPtr& 
 	// mtx.unlock();
 }
 
+// void DogDriverNode::setVelocity(std::vector<double>& linear_vel, std::vector<double>& angular_vel)
+// {
+//     doglcm::pub_ctrl ctrl_data;
+//     for(int i=0; i<3; i++)
+//     {
+//         ctrl_data.linear_velocity[i] = linear_vel[i];
+//         ctrl_data.angular_velocity[i+3] = angular_vel[i];
+//     }
+// 	std::cout<<"vx = "<<ctrl_data.linear_velocity[0]<<std::endl;
+//     my_lcm.publish("VISDEV", &ctrl_data);
+// }
+
 void DogDriverNode::setVelocity(std::vector<double>& linear_vel, std::vector<double>& angular_vel)
 {
-    doglcm::pub_ctrl ctrl_data;
+    doglcm::vis_dev_cmd_t ctrl_data;
     for(int i=0; i<3; i++)
     {
-        ctrl_data.linear_velocity[i] = linear_vel[i];
-        ctrl_data.angular_velocity[i+3] = angular_vel[i];
+        ctrl_data.v_des[i] = linear_vel[i];
+        ctrl_data.w_des[i+3] = angular_vel[i];
     }
-    my_lcm.publish("pub_dog_lcm", &ctrl_data);
+    my_lcm->publish("VISDEV", &ctrl_data);
 }
 
 void DogDriverNode::stop()
@@ -160,7 +185,7 @@ void DogDriverNode::spin()
     ros::Rate loop_rate(framerate_);
     while(ros::ok())
     {
-        my_lcm.handleTimeout(1);
+        my_lcm->handleTimeout(1);
         ros::spinOnce();
         loop_rate.sleep();
     }

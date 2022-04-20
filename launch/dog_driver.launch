@@ -1,6 +1,6 @@
 <launch>
   <node name="dog_driver_node" pkg="ros_lcm_bridge" type="dog_driver_node" output="screen" >
-    <param name="dog_device" value="rec_dog_lcm" />
+    <param name="dog_device" value="state_estimator_lcm" />
     <param name="framerate" value="500" type="int" />
   </node>
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ros_gogodog_bridge)/config/test.rviz" /> -->

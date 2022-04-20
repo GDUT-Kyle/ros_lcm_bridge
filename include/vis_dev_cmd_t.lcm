@@ -1,0 +1,6 @@
+package doglcm;
+struct vis_dev_cmd_t 
+{
+    float v_des[3];
+    float w_des[3];
+}
